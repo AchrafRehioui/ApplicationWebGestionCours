@@ -24,7 +24,7 @@ form.addEventListener('submit', e => {
     }
 
     db.collection("cours").add(cours)
-        .then(res => console.log(res, 'cours ajouté'))
+        .then(res => form.reset())
         .catch(err => console.error(err))
 
 })
@@ -32,7 +32,7 @@ form.addEventListener('submit', e => {
 AjoutCours = (cours, id) => {
 
     const html = `
-        <li class="list-group-item" data-id="{${id}}">
+        <li class="list-group-item" data-id="${id}">
             <h3>${cours.title}</h3>
             <small>${cours.created_at.toDate()}</small>
             <button class ="btn btn-danger btn-sm my-3">Supprimer</button>
@@ -41,10 +41,31 @@ AjoutCours = (cours, id) => {
     list.innerHTML += html;
 }
 
-db.collection("cours").get()
-    .then(res => res.docs.forEach(cours => {
-        console.log(cours.id)
-        AjoutCours(cours.data(), cours.id)
-    }))
-    .catch(err => console.error(err))
+
+const deleteCours = id => {
+    if( !confirm ('Vous etes sur de supprimer ce cours')){
+        return;
+    }
+    const c1 = document.querySelectorAll('li');
+    c1.forEach(c => {
+        if(c.getAttribute('data-id') === id ){
+            c.remove();
+        }
+    } )
+}
+
+db.collection("cours").onSnapshot(snap => { 
+    console.log(snap.docChanges())
+
+    snap.docChanges().forEach(c => {
+    console.log(c.doc.id)
+
+    if(c.type === "added"){
+        AjoutCours(c.doc.data(), c.doc.id)
+    } else {
+        deleteCours(c.doc.id);
+    }
+})
+})
+    
 
